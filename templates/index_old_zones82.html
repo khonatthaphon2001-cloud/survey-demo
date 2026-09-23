@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>แบบสำรวจสภาพอาคาร (ชุดเดิม — โครงสร้างโซน/Excel 82 ข้อ)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FAF9F4;
+    --paper-raised:#FFFFFF;
+    --ink:#1C2430;
+    --ink-soft:#5B6472;
+    --ink-faint:#A6A196;
+    --blueprint:#2C4C7C;
+    --blueprint-deep:#1E3557;
+    --blueprint-wash:#EAF0F8;
+    --amber:#B5722A;
+    --amber-wash:#FBF0E3;
+    --green:#3D7A5C;
+    --green-wash:#E9F3EE;
+    --red:#B0402E;
+    --red-wash:#FBEDE9;
+    --line:#DCD8CC;
+    --line-soft:#EAE7DD;
+    --radius:4px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'IBM Plex Sans Thai', sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  .mono{font-family:'IBM Plex Mono', monospace;}
+  .hidden{display:none !important;}
+  .build-banner{
+    background:var(--blueprint-deep);color:#fff;text-align:center;font-size:12px;
+    padding:7px 10px;line-height:1.5;
+  }
+
+  .screen{
+    max-width:460px;margin:0 auto;min-height:100vh;display:none;
+    flex-direction:column;padding:0 20px 40px;
+  }
+  .screen.active{display:flex;}
+
+  .top-strip{padding:18px 0 14px;border-bottom:1px solid var(--line);margin-bottom:22px;}
+  .top-strip .brand{display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--ink-soft);}
+  .top-strip .brand .mark{
+    width:20px;height:20px;border-radius:3px;background:var(--blueprint);
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  }
+  .top-strip .brand .mark svg{width:12px;height:12px;}
+  .top-strip .brand span.mono{color:var(--blueprint-deep);}
+
+  .headline{font-size:21px;font-weight:700;line-height:1.4;margin:0 0 8px;}
+  .subline{font-size:14px;color:var(--ink-soft);margin:0 0 24px;line-height:1.6;}
+
+  .progress-dots{display:flex;gap:6px;margin-bottom:22px;}
+  .progress-dots .seg{flex:1;height:3px;border-radius:2px;background:var(--line);}
+  .progress-dots .seg.done{background:var(--blueprint);}
+
+  .field{margin-bottom:18px;}
+  .field label{display:block;font-size:13.5px;font-weight:600;margin-bottom:7px;}
+  .field label .num{
+    display:inline-flex;align-items:center;justify-content:center;width:19px;height:19px;border-radius:50%;
+    background:var(--blueprint-wash);color:var(--blueprint-deep);font-size:11.5px;
+    font-family:'IBM Plex Mono',monospace;margin-right:7px;
+  }
+  .field .helper{font-size:12px;color:var(--ink-faint);margin-top:6px;line-height:1.5;}
+  .field input, .field select{
+    width:100%;padding:14px 16px;font-size:16px;font-family:inherit;
+    border:1.5px solid var(--line);border-radius:var(--radius);background:var(--paper-raised);color:var(--ink);
+  }
+  .field input.mono-input{font-family:'IBM Plex Mono',monospace;letter-spacing:0.06em;}
+  .field input:focus, .field select:focus{outline:none;border-color:var(--blueprint);}
+  .field input::placeholder{color:var(--ink-faint);}
+  .field.error input{border-color:var(--red);}
+  .field .error-msg{display:none;font-size:12.5px;color:var(--red);margin-top:6px;}
+  .field.error .error-msg{display:block;}
+  .field.error .helper{display:none;}
+  select{
+    appearance:none;-webkit-appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M5 8L10 13L15 8' stroke='%235B6472' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 14px center;padding-right:40px;
+  }
+  select:invalid{color:var(--ink-faint);}
+
+  .toggle2{display:flex;gap:8px;}
+  .toggle2 .t-btn{
+    flex:1;padding:13px 0;text-align:center;border:1.5px solid var(--line);border-radius:var(--radius);
+    background:var(--paper-raised);font-family:inherit;font-size:14px;font-weight:500;color:var(--ink-soft);cursor:pointer;
+  }
+  .toggle2 .t-btn.selected{border-color:var(--blueprint);background:var(--blueprint-wash);color:var(--blueprint-deep);}
+
+  .btn-primary{
+    width:100%;padding:16px;background:var(--blueprint);color:#fff;border:none;border-radius:var(--radius);
+    font-family:inherit;font-size:16px;font-weight:600;cursor:pointer;margin-bottom:10px;
+  }
+  .btn-primary:disabled{background:var(--line);color:var(--ink-faint);cursor:not-allowed;}
+  .btn-primary:not(:disabled):active{background:var(--blueprint-deep);}
+  .btn-ghost{width:100%;padding:14px;background:transparent;color:var(--ink-soft);border:none;font-family:inherit;font-size:14px;cursor:pointer;}
+  .btn-ghost:active{color:var(--ink);}
+
+  .confirm-card{background:var(--paper-raised);border:1px solid var(--line);border-radius:6px;overflow:hidden;margin-bottom:16px;}
+  .confirm-top{background:var(--blueprint-wash);padding:22px 20px 18px;text-align:center;border-bottom:1px solid var(--line);}
+  .confirm-top .check{
+    width:44px;height:44px;border-radius:50%;background:var(--blueprint);
+    display:flex;align-items:center;justify-content:center;margin:0 auto 12px;
+  }
+  .confirm-top .check svg{width:22px;height:22px;color:#fff;}
+  .confirm-top .name{font-size:19px;font-weight:700;margin:0 0 4px;}
+  .confirm-top .code{font-size:13px;color:var(--blueprint-deep);}
+  .confirm-fields{padding:4px 20px 4px;}
+  .cf-row{display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--line-soft);font-size:14px;}
+  .cf-row:last-child{border-bottom:none;}
+  .cf-row .k{color:var(--ink-soft);}
+  .cf-row .v{font-weight:500;text-align:right;}
+  .cf-row .v.mono{font-family:'IBM Plex Mono',monospace;}
+  .confirm-note{font-size:12px;color:var(--ink-faint);text-align:center;line-height:1.6;margin-top:4px;}
+
+  .transition-body{flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding-top:60px;}
+  .spinner{
+    width:32px;height:32px;border:3px solid var(--line);border-top-color:var(--blueprint);
+    border-radius:50%;animation:spin .7s linear infinite;margin-bottom:18px;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .transition-body p{font-size:14px;color:var(--ink-soft);margin:0;}
+  .transition-body p b{color:var(--ink);font-weight:600;}
+
+  .footer-note{margin-top:auto;padding-top:24px;font-size:11.5px;color:var(--ink-faint);text-align:center;line-height:1.6;}
+
+  #surveyScreen{max-width:560px;padding:0;display:none;}
+  #surveyScreen.active{display:block;}
+  #photoScreen{max-width:560px;padding:0;display:none;}
+  #photoScreen.active{display:block;}
+
+  .survey-top-bar{position:sticky;top:0;z-index:20;background:var(--paper);border-bottom:1px solid var(--line);padding:14px 20px 12px;}
+  .survey-top-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .back-btn{
+    width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:var(--paper-raised);
+    display:flex;align-items:center;justify-content:center;color:var(--ink-soft);flex-shrink:0;cursor:pointer;
+  }
+  .back-btn svg{width:15px;height:15px;}
+  .branch-chip{flex:1;min-width:0;}
+  .branch-chip .bname{font-size:14.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .branch-chip .bmeta{font-size:11.5px;color:var(--ink-soft);}
+  .branch-chip .bmeta .mono{color:var(--blueprint-deep);}
+  .progress-track{height:5px;background:var(--line-soft);border-radius:3px;overflow:hidden;}
+  .progress-fill{height:100%;width:0%;background:var(--blueprint);border-radius:3px;transition:width .2s ease;}
+  .progress-label{font-size:11.5px;color:var(--ink-soft);margin-top:6px;display:flex;justify-content:space-between;}
+  .progress-label b{color:var(--blueprint-deep);font-weight:600;}
+
+  .zone-heading{padding:18px 20px 4px;}
+  .zone-tag{
+    display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;
+    color:var(--blueprint-deep);background:var(--blueprint-wash);padding:4px 10px;border-radius:100px;margin-bottom:10px;
+  }
+  .zone-heading h1{font-size:27px;font-weight:700;margin:0 0 8px;line-height:1.3;}
+  .zone-heading p{font-size:13.5px;color:var(--ink-soft);margin:0;line-height:1.6;}
+
+  .group-label{
+    font-size:12.5px;font-weight:600;color:var(--blueprint-deep);
+    margin:18px 20px 8px;padding-bottom:6px;border-bottom:1px solid var(--line-soft);
+  }
+
+  .questions{padding:14px 20px 0;display:flex;flex-direction:column;gap:12px;}
+  .qcard{background:var(--paper-raised);border:1px solid var(--line);border-radius:6px;padding:16px;}
+  .qcard.answered{border-color:var(--blueprint);}
+  .qhead{display:flex;align-items:flex-start;gap:10px;margin-bottom:14px;}
+  .qnum{
+    width:30px;height:30px;border-radius:50%;background:var(--blueprint-wash);
+    color:var(--blueprint-deep);font-family:'IBM Plex Mono',monospace;font-size:13.5px;
+    font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  }
+  .qcard.answered .qnum{background:var(--blueprint);color:#fff;}
+  .qtitle-wrap{flex:1;min-width:0;}
+  .qtitle{font-size:16.5px;font-weight:700;color:var(--ink);line-height:1.45;}
+  .qtitle .req{color:var(--red);font-style:normal;margin-left:2px;}
+
+  .qty-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .qty-row label{font-size:12.5px;color:var(--ink-soft);flex-shrink:0;}
+  .qty-row input{
+    width:76px;padding:9px 10px;font-size:14px;font-family:'IBM Plex Mono',monospace;
+    border:1px solid var(--line);border-radius:var(--radius);background:var(--paper);color:var(--ink);
+  }
+  .qty-row input:focus{outline:none;border-color:var(--blueprint);}
+  .qty-row input:disabled{background:var(--line-soft);color:var(--ink-faint);}
+
+  .yn-toggle{display:flex;gap:8px;margin-bottom:10px;}
+  .yn-btn{
+    flex:1;padding:11px 0;text-align:center;border:1.5px solid var(--line);border-radius:var(--radius);
+    background:var(--paper-raised);font-family:inherit;font-size:14px;font-weight:500;color:var(--ink-soft);cursor:pointer;
+  }
+  .yn-btn.ok.selected{border-color:var(--green);background:var(--green-wash);color:var(--green);}
+  .yn-btn.bad.selected{border-color:var(--red);background:var(--red-wash);color:var(--red);}
+  .yn-btn.none.selected{border-color:var(--ink-faint);background:var(--line-soft);color:var(--ink-soft);}
+
+  .qcard textarea{
+    width:100%;min-height:56px;padding:10px 12px;border:1px solid var(--line);border-radius:var(--radius);
+    font-family:inherit;font-size:13.5px;color:var(--ink);resize:vertical;margin-bottom:0;
+  }
+  .qcard textarea:focus{outline:none;border-color:var(--blueprint);}
+  .qcard textarea::placeholder{color:var(--ink-faint);}
+
+  .photo-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  .photo-add{
+    width:56px;height:56px;border:1.5px dashed var(--line);border-radius:var(--radius);
+    display:flex;align-items:center;justify-content:center;color:var(--ink-faint);cursor:pointer;flex-shrink:0;background:var(--paper);
+  }
+  .photo-add:active{border-color:var(--blueprint);color:var(--blueprint);}
+  .photo-add svg{width:20px;height:20px;}
+  .photo-thumb{width:56px;height:56px;border-radius:var(--radius);overflow:hidden;position:relative;flex-shrink:0;border:1px solid var(--line);}
+  .photo-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+  .photo-thumb .rm{
+    position:absolute;top:2px;right:2px;width:16px;height:16px;border-radius:50%;
+    background:rgba(28,36,48,0.7);display:flex;align-items:center;justify-content:center;cursor:pointer;
+  }
+  .photo-thumb .rm svg{width:9px;height:9px;color:#fff;}
+
+  .photo-qcard{background:var(--paper-raised);border:1px solid var(--line);border-radius:6px;padding:16px;}
+  .photo-qhead{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:12px;}
+  .photo-qhead-left{display:flex;align-items:flex-start;gap:10px;}
+  .photo-qhead-left .qtitle{font-size:15.5px;}
+  .status-badge{
+    display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:100px;
+    font-size:12px;font-weight:600;flex-shrink:0;white-space:nowrap;
+  }
+  .status-badge.ok{background:var(--green-wash);color:var(--green);}
+  .status-badge.bad{background:var(--red-wash);color:var(--red);}
+  .status-badge.none{background:var(--line-soft);color:var(--ink-soft);}
+  .status-badge .dot{width:5px;height:5px;border-radius:50%;background:currentColor;}
+  .photo-count-tag{font-size:12px;color:var(--ink-faint);margin-top:8px;display:block;}
+  .photo-count-tag.has-photo{color:var(--blueprint-deep);font-weight:500;}
+
+  .zone-nav-bar{
+    position:sticky;bottom:0;background:var(--paper);border-top:1px solid var(--line);
+    padding:14px 20px calc(14px + env(safe-area-inset-bottom));margin-top:18px;
+  }
+  .zone-nav-row{display:flex;gap:10px;}
+  .zone-nav-row .btn-secondary{
+    flex:0 0 76px;padding:15px 0;background:var(--paper-raised);color:var(--ink-soft);
+    border:1.5px solid var(--line);border-radius:var(--radius);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;
+  }
+  .zone-nav-row .btn-secondary:disabled{opacity:0.4;cursor:not-allowed;}
+  .zone-nav-row .submit-btn{flex:1;}
+  .submit-btn{
+    padding:16px;background:var(--blueprint);color:#fff;border:none;border-radius:var(--radius);
+    font-family:inherit;font-size:16px;font-weight:600;cursor:pointer;width:100%;
+  }
+  .submit-btn:active{background:var(--blueprint-deep);}
+  .submit-sub{font-size:11.5px;color:var(--ink-faint);text-align:center;margin-top:8px;}
+
+  .zone-panel{display:none;}
+  .zone-panel.active{display:block;}
+
+  #doneScreen{
+    display:none;min-height:100vh;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 30px;
+  }
+  #doneScreen.active{display:flex;}
+  .done-check{
+    width:60px;height:60px;border-radius:50%;background:var(--green);
+    display:flex;align-items:center;justify-content:center;margin-bottom:20px;
+  }
+  .done-check svg{width:28px;height:28px;color:#fff;}
+  #doneScreen h2{font-size:20px;margin:0 0 8px;}
+  #doneScreen p{font-size:14px;color:var(--ink-soft);line-height:1.7;max-width:320px;margin:0;}
+  #doneScreen .bname{color:var(--ink);font-weight:600;}
+</style>
+</head>
+<body>
+<div class="build-banner">ชุดเดิม (โครงสร้างโซนพื้นที่ จาก Survey Service List.xlsx — 82 ข้อ) — เก็บไว้แยกจากชุดใหม่</div>
+
+<!-- ============ SCREEN 1: branch info form ============ -->
+<div class="screen active" id="screen1">
+  <div class="top-strip">
+    <div class="brand">
+      <span class="mark"><svg viewBox="0 0 20 20" fill="none"><path d="M3 10L10 3L17 10" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 9V16.5C5 16.78 5.22 17 5.5 17H14.5C14.78 17 15 16.78 15 16.5V9" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      แบบสำรวจสภาพอาคาร &middot; <span class="mono">2570</span>
+    </div>
+  </div>
+
+  <div class="progress-dots"><div class="seg done"></div><div class="seg"></div></div>
+
+  <h1 class="headline">ระบุข้อมูลสาขาของท่าน</h1>
+  <p class="subline">กรอกข้อมูลให้ครบทุกช่อง ก่อนเริ่มทำแบบสำรวจ</p>
+
+  <div class="field" id="fBranchId">
+    <label><span class="num">1</span>ID สาขาของท่าน</label>
+    <input type="text" id="branchId" placeholder="กรุณากรอก ID ของท่าน" autocomplete="off">
+    <div class="helper">ดูได้จากป้ายสาขา หรือสอบถามหัวหน้าสาขา</div>
+    <div class="error-msg">กรุณาระบุ ID สาขา</div>
+  </div>
+
+  <div class="field" id="fBranchName">
+    <label><span class="num">2</span>ชื่อสาขาของท่าน</label>
+    <input type="text" id="branchName" placeholder="กรุณากรอกชื่อสาขาเป็นภาษาไทยเท่านั้น" autocomplete="off">
+    <div class="helper">ระบุชื่อสาขาเต็ม ไม่ต้องย่อ</div>
+    <div class="error-msg">กรุณาระบุชื่อสาขา</div>
+  </div>
+
+  <div class="field" id="fAfsId">
+    <label><span class="num">3</span>AFS ID (เลขสี่ตัวของสาขาท่าน)</label>
+    <input type="text" id="afsId" class="mono-input" placeholder="กรุณากรอกเพียงตัวเลข 4 ตัวเท่านั้น" inputmode="numeric" maxlength="4" autocomplete="off">
+    <div class="helper">ตัวเลข 4 หลักเท่านั้น</div>
+    <div class="error-msg">AFS ID ต้องเป็นตัวเลข 4 หลัก</div>
+  </div>
+
+  <div class="field" id="fArea">
+    <label><span class="num">4</span>พื้นที่ของท่าน</label>
+    <select id="area">
+      <option value="" selected disabled>เลือกพื้นที่</option>
+      <option value="BE">BE</option>
+      <option value="BN">BN</option>
+      <option value="BS">BS</option>
+      <option value="CE">CE</option>
+      <option value="CN">CN</option>
+      <option value="EN">EN</option>
+      <option value="ES">ES</option>
+      <option value="NO">NO</option>
+      <option value="SO">SO</option>
+    </select>
+    <div class="helper">เลือกพื้นที่ที่สาขาของท่านตั้งอยู่</div>
+    <div class="error-msg">กรุณาเลือกพื้นที่</div>
+  </div>
+
+  <div class="field" id="fMaxFloor">
+    <label><span class="num">5</span>อาคารสาขามีถึงชั้นไหน</label>
+    <select id="maxFloor">
+      <option value="" selected disabled>เลือกชั้นสูงสุด</option>
+      <option value="1">ชั้น 1 (ไม่มีชั้นเพิ่ม)</option>
+      <option value="2">ชั้น 2 (มีชั้นลอย)</option>
+      <option value="3">ชั้น 3</option>
+      <option value="4">ชั้น 4</option>
+      <option value="5">ชั้น 5</option>
+      <option value="6">ชั้น 6</option>
+    </select>
+    <div class="helper">ชั้นลอยนับเป็นชั้น 2 &middot; ระบบจะสร้างโซนตรวจสอบเฉพาะชั้นที่มีจริงเท่านั้น</div>
+    <div class="error-msg">กรุณาเลือกชั้นสูงสุดของอาคาร</div>
+  </div>
+
+  <div class="field" id="fRooftop">
+    <label><span class="num">6</span>สาขามีพื้นที่ดาดฟ้าหรือไม่</label>
+    <div class="toggle2" id="rooftopToggle">
+      <button type="button" class="t-btn" data-val="yes">มีดาดฟ้า</button>
+      <button type="button" class="t-btn" data-val="no">ไม่มี</button>
+    </div>
+    <div class="helper">ใช้กำหนดว่าต้องตรวจสอบโซน "พื้นที่ดาดฟ้า" หรือไม่</div>
+    <div class="error-msg">กรุณาเลือกว่ามีดาดฟ้าหรือไม่</div>
+  </div>
+
+  <button class="btn-primary" id="nextBtn" disabled>ถัดไป</button>
+  <div class="footer-note">ระบบสำรวจภายในบริษัท &middot; ไม่ต้อง Login</div>
+</div>
+
+<!-- ============ SCREEN 2: confirm ============ -->
+<div class="screen" id="screen2">
+  <div class="top-strip">
+    <div class="brand">
+      <span class="mark"><svg viewBox="0 0 20 20" fill="none"><path d="M3 10L10 3L17 10" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 9V16.5C5 16.78 5.22 17 5.5 17H14.5C14.78 17 15 16.78 15 16.5V9" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      แบบสำรวจสภาพอาคาร &middot; <span class="mono">2570</span>
+    </div>
+  </div>
+
+  <div class="progress-dots"><div class="seg done"></div><div class="seg done"></div></div>
+
+  <h1 class="headline">ยืนยันข้อมูลสาขา</h1>
+  <p class="subline">ตรวจสอบให้ถูกต้องก่อนเริ่มทำแบบสำรวจ</p>
+
+  <div class="confirm-card">
+    <div class="confirm-top">
+      <div class="check"><svg viewBox="0 0 20 20" fill="none"><path d="M4 10L8 14L16 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="name" id="cName">&mdash;</div>
+      <div class="code mono" id="cId">&mdash;</div>
+    </div>
+    <div class="confirm-fields">
+      <div class="cf-row"><span class="k">AFS ID</span><span class="v mono" id="cAfs">&mdash;</span></div>
+      <div class="cf-row"><span class="k">พื้นที่</span><span class="v mono" id="cArea">&mdash;</span></div>
+      <div class="cf-row"><span class="k">ชั้นสูงสุด</span><span class="v" id="cMaxFloor">&mdash;</span></div>
+      <div class="cf-row"><span class="k">ดาดฟ้า</span><span class="v" id="cRooftop">&mdash;</span></div>
+      <div class="cf-row"><span class="k">จำนวนข้อทั้งหมด</span><span class="v mono" id="cTotalQ">&mdash;</span></div>
+    </div>
+  </div>
+  <div class="confirm-note">แบบสำรวจจะถูกสร้างตามข้อมูลชั้นที่ระบุไว้ข้างต้น</div>
+
+  <button class="btn-primary" id="confirmBtn" style="margin-top:20px;">ยืนยันและเริ่มทำแบบสำรวจ</button>
+  <button class="btn-ghost" id="backBtn">แก้ไขข้อมูล</button>
+</div>
+
+<!-- ============ SCREEN 3: transition ============ -->
+<div class="screen" id="screen3">
+  <div class="transition-body">
+    <div class="spinner"></div>
+    <p>กำลังเข้าสู่แบบสำรวจของ<br><b id="loadingName">&mdash;</b></p>
+  </div>
+</div>
+
+<!-- ============ SCREEN 4: text answers (zone-by-zone) ============ -->
+<div class="screen" id="surveyScreen">
+  <div class="survey-top-bar">
+    <div class="survey-top-row">
+      <button class="back-btn" id="surveyBackBtn">
+        <svg viewBox="0 0 20 20" fill="none"><path d="M12 4L6 10L12 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="branch-chip">
+        <div class="bname" id="branchNameOut">&mdash;</div>
+        <div class="bmeta"><span class="mono" id="branchIdOut">&mdash;</span> &middot; AFS <span class="mono" id="afsIdOut">&mdash;</span> &middot; <span class="mono" id="areaOut">&mdash;</span></div>
+      </div>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-label">
+      <span>ตอบแล้ว <b id="answeredCount">0</b> / <span id="totalCount">0</span> ข้อ</span>
+      <span id="zoneTagText">โซน 1/1</span>
+    </div>
+  </div>
+
+  <div id="textZonesContainer"></div>
+
+  <div class="zone-nav-bar">
+    <div class="zone-nav-row">
+      <button class="btn-secondary" id="textPrevBtn">ย้อน</button>
+      <button class="submit-btn" id="textNextBtn">ถัดไปโซน</button>
+    </div>
+    <div class="submit-sub" id="textNavSub">ตอบให้ครบทุกข้อในโซนนี้ก่อนไปโซนถัดไป</div>
+  </div>
+</div>
+
+<!-- ============ SCREEN 4b: photo attach (zone-by-zone) ============ -->
+<div class="screen" id="photoScreen">
+  <div class="survey-top-bar">
+    <div class="survey-top-row">
+      <button class="back-btn" id="photoBackBtn">
+        <svg viewBox="0 0 20 20" fill="none"><path d="M12 4L6 10L12 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="branch-chip">
+        <div class="bname" id="branchNameOutPhoto">&mdash;</div>
+        <div class="bmeta"><span class="mono" id="branchIdOutPhoto">&mdash;</span> &middot; AFS <span class="mono" id="afsIdOutPhoto">&mdash;</span> &middot; <span class="mono" id="areaOutPhoto">&mdash;</span></div>
+      </div>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="photoProgressFill"></div></div>
+    <div class="progress-label">
+      <span>แนบรูปแล้ว <b id="photoCount">0</b> / <span id="photoTotalCount">0</span> ข้อ</span>
+      <span id="zoneTagPhoto">โซน 1/1</span>
+    </div>
+  </div>
+
+  <div id="photoZonesContainer"></div>
+
+  <div class="zone-nav-bar">
+    <div class="zone-nav-row">
+      <button class="btn-secondary" id="photoPrevBtn">ย้อน</button>
+      <button class="submit-btn" id="photoNextBtn">ถัดไปโซน</button>
+    </div>
+    <div class="submit-sub" id="photoNavSub">แนบรูปไม่บังคับทุกข้อ &middot; กด "ถัดไปโซน" เพื่อไปต่อได้เลย</div>
+  </div>
+</div>
+
+<!-- ============ SCREEN 5: done ============ -->
+<div id="doneScreen">
+  <div class="done-check"><svg viewBox="0 0 20 20" fill="none"><path d="M4 10L8 14L16 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+  <h2>ส่งแบบสำรวจเรียบร้อยแล้ว</h2>
+  <p>ขอบคุณสำหรับการสำรวจสภาพอาคารของ <span class="bname" id="doneBranchName">&mdash;</span> ระบบได้บันทึกข้อมูลและรูปภาพของท่านเรียบร้อย</p>
+</div>
+
+<script>
+  const OUTSIDE_INTRO = "ตรวจสอบวัสดุหรืออุปกรณ์เหล่านี้ ต้องไม่มีการชำรุด ฉีกขาด สีซีด หรืออื่นๆ \n(หากมีอาการชำรุดโปรดระบุในช่อง Comment)";
+  const OUTSIDE_GROUPS = [{"label": "เงื่อนไขเคสสีแดงสำหรับงานป้ายสาขา วงเล็บด้านหลัง", "items": ["Blade sign (สลิงหย่อน, ขาด, ซีด)", "Billboard (ขาด,ซีด)", "Fascia (ขาด,ซีด)", "Highway (ไฟไม่ติด หากมีไฟ , ซีด)", "Pylon sign (ป้ายล้อเลื่อน) (ป้ายขาด , โครงป้ายผุพัง , ตั้งไม่ได้)", "ป้ายธงทะเล (ขาด,ซีด)", "ป้ายตั้งพื้นพลาสติก(Standee) (ขาด , ซีด , ตั้งไม่ได้)", "ป้ายตั้งพื้นเหล็ก(A-sign) (ถ้ามี) (ขาด , ซีด , ตั้งไม่ได้)", "สติกเกอร์ซุ้มประตูเหล็กม้วน (ชื่อสาขา) (ขาด,ซีด)", "สติ๊กเกอร์ประตูกระจก (รวมสาขาในห้าง) (ซีดจนมองไม่เห็นสื่อ)", "สติ๊กเกอร์ ด้านข้างสาขา (ขาด,ซีดจนมองไม่เห็นสื่อ)", "ป้าย ด้านข้างสาขา  (ขาด,ซีดจนมองไม่เห็นสื่อ)", "ป้ายแขวน(Banner) (เชือกแขวนป้ายเปื่อย , ป้ายขาด+ซีด )", "แลมป์เหล็ก/แลมป์ปูน อยู่ในสภาพพร้อมใช้งาน (แลมป์เหล็กผุพัง , แลมป์ปูนแตกชำรุด)"]}];
+  const HALL_INTRO = "ตรวจสอบสภาพของอุปกรณ์ตามรายการ";
+  const HALL_GROUPS = [{"label": null, "items": ["ป้ายสิทธิลูกค้า ต้องไม่มีอาการชำรุด ฉีกขาด สีซีด", "แอร์ในโถงทำการสามารถใช้งานได้ตามปกติ รวมถึงการทำงานของรีโมทหรือเทอร์โมรูม", "ประตูบานเปิดเข้าด้านหลังและด้านออกไปด้านนอกต้องสามารถเปิด-ปิด และล็อคได้ปกติ", "อุปกรณ์ความปลอดภัย ถังดับเพลิง มีการตรวจสอบเป็นปัจจุบัน (ต้องตรวจเช็คครบทุกเดือนถึงเดือนปัจจุบัน)", "อุปกรณ์ความปลอดภัย ไฟฉุกเฉิน มีการตรวจสอบเป็นปัจจุบัน (ต้องตรวจเช็คครบทุกเดือนถึงเดือนปัจจุบัน)", "ตู้ควบคุมไฟ, Timer switch(นาฬิกาตั้งเวลาไฟป้าย) ทำงานเป็นปกติไม่มีจุดบ่งชี้ถึงการชำรุด"]}, {"label": "Back Drop", "items": ["ต้องไม่มีรอยแตก ร้าว หรือเปื้อนสีอื่นๆนอกจากสีของ Back Drop และสีไม่ซีด", "ตัวหนังสือต้องอยู่ครบทุกตัว และต้องอยู่ในระดับเดียวกันทุกตัว", "ไม่พบแนวรั่วซึมของน้ำจากภายนอกหรือด้านบน (ระบุจุดรั่วซึมของน้ำหรืออื่นๆ)"]}, {"label": "สภาพพื้นโถงทำการ", "items": ["กระเบื้องต้องไม่แตก ไม่โก่งไม่ร่อนออกจากพื้น", "ไม่พบแนวรั่วซึมของน้ำจากภายนอกหรือด้านบน (ระบุจุดรั่วซึมของน้ำหรืออื่นๆ)"]}, {"label": "สภาพผนังของโถงทำการ", "items": ["ต้องไม่มีรอยแตกร้าว และ ผนังพองภายในพื้นที่", "ต้องไม่มีรอยเปื้อนหรือสิ่งสกปรกบนพื้นที่ผนัง (คราบน้ำ , คราบสกปรก)", "ไม่พบแนวรั่วซึมของน้ำจากภายนอกหรือด้านบน (ระบุจุดรั่วซึมของน้ำหรืออื่นๆ)"]}, {"label": "สภาพฝ้าเพดานของโถงทำการ", "items": ["ฝ้าต้องไม่มีรอยแตก ไม่โก่ง ไม่นูน หรือยุบตัว(ฝ้าต้องปิดสนิทแนบโครงฝ้ากรณีเป็นฝ้าทีบาร์)", "ไม่พบร่องรอยหรือคราบน้ำซึมของน้ำจากภายนอกหรือด้านบน (ระบุจุดรั่วซึมของน้ำหรืออื่นๆ)"]}];
+  const RESTROOM_INTRO = "ตรวจสอบสภาพการใช้งานของอุปกรณ์สภาพพื้นที่ภายในห้องน้ำ";
+  const RESTROOM_GROUPS = [{"label": null, "items": ["ซิ้งค์ล้างจานก็อกน้ำต้องเปิด-ปิดได้ปกติ สายน้ำและสต็อปวาล์วอยู่ในสภาพพร้อมใช้งาน ท่อระบายไม่มีอาการรั่วหรืออุดตัน และไม่มีน้ำรั่วซึมจากทุกจุด", "ปั้มน้ำอัตโนมัติทำงานเป็นปกติไม่มีอาการบ่งชี้การชำรุดหรือไม่มีน้ำรั่วซึมจากท่อส่งน้ำ (ถ้าไม่ใช้น้ำปั๊มน้ำต้องไม่ทำงาน)", "ถังเก็บน้ำ ตรวจสอบการทำลูกลอยในแทงค์น้ำ ฐานที่ตั้งต้องไม่เอียงไม่พบน้ำรั่วซึมจากตัวถังรวมถึงพื้นต้องไม่พบแนวน้ำรั่วซึม"]}, {"label": "ภายในห้องน้ำ", "items": ["ภายในห้องน้ำพื้นกระเบื้องไม่มีรอยแตกหรือน้ำรั่วซึม", "ผนังห้องน้ำไม่มีรอยแตกร้าวและไม่พบแนวรั่วซึมของน้ำ", "ฝ้าภายในห้องน้ำอยู่ในสภาพดี ไม่ชำรุดหรือพบแนวรั่วซึมของน้ำ", "ชักโครก ยาแนวไม่แตกหลุดร่อน,ไม่มีน้ำซึม ฝารองนั่งชักโครกไม่ชำรุด อุปกรณ์ถังพักน้ำชักโครกทำงานปกติ ไม่มีน้ำรั่วไหลซึม", "อ่างล้างหน้า ท่อระบาย ก็อกน้ำ สามารถใช้งานได้ปกติและ ไม่พบการรั่วซึมของน้ำจากอุปกรณ์", "จุดระบายน้ำ หรือท่อระบาย สามารถระบายน้ำได้ตามปกติ ไม่พบสิ่งสกปรกหรือการอุดตัน"]}];
+  const ROOFTOP_INTRO = "ตรวจสอบพื้นที่โดยรอบและโครงสร้างป้าย";
+  const ROOFTOP_GROUPS = [{"label": null, "items": ["ตรวจสอบความสะอาดของพื้นที่โดยรอบไม่พบขยะหรือมูลสัตว์", "ตรวจสอบพื้นที่ดาดฟ้าไม่พบจุดชำรุด แตก ร้าว ของพื้นดาดฟ้า", "ไม่พบแนวรั่วซึมของน้ำ หรืออาการบ่งชี้การรั่วซึมจากพื้นดาดฟ้าลงไปยังชั้นล่าง", "ตรวจสอบจุดยึด น็อตยึดตัวโครงป้ายกับอาคารไม่พบอาการชำรุด เป็นสนิม หรือหลุดหายของอุปกรณ์", "ประตูดาดฟ้าต้องไม่ชำรุด ผุพัง สามารถใช้งานได้ตามปกติ", "ท่อระบายน้ำต้องไม่อุดตันด้วยมูลสัตว์ หรือ เศษขยะ", "ตรวจสอบไม่พบวัชพืช/ต้นไม้ขึ้นในพื้นที่อาคาร"]}];
+  const FLOOR_INTRO = "ตรวจสอบสภาพอาคารและพื้นที่";
+  const FLOOR_ITEMS = ["ภายในพื้นที่ชั้นลอยไม่พบแนวรั่วซึมของน้ำ (ระบุจุดรั่วซึมของน้ำหรืออื่นๆ)", "ตรวจสอบพื้นที่โดยรอบไม่พบสิ่งสกปรกหรือขยะต่างๆ", "ตรวจสอบพื้นที่โดยรอบไม่พบจุดชำรุด แตก ร้าว หรือยุบตัวของพื้น ฝ้า ผนังอาคาร (หากพบโปรดระบุจุดที่ชำรุด)", "ตรวจสอบพื้นที่ระเบียงไม่พบสิ่งสกปรก,มูลสัตว์ และการระบายท่อน้ำต้องไม่อุดตัน", "ตรวจสอบประตู หน้าต่าง สามารถเปิด - ปิด และล็อคได้ปกติ ไม่พบจุดชำรุด (หากพบโปรดระบุจุดที่ชำรุด)", "ตรวจสอบห้องน้ำภายในชั้นไม่พบแนวรั่วซึมของน้ำจากอุปกรณ์และพื้นที่โดยรอบ และไม่พบสิ่งสกปรกในพื้นที่หรือจุดชำรุดต่างๆ"];
+
+  function floorGroups(){ return [{ label: null, items: FLOOR_ITEMS.slice() }]; }
+
+  let branchData = {name:'', id:'', afs:'', area:'', maxFloor:'', rooftop:''};
+  let ZONES = [];
+  let QUESTIONS = [];
+
+  function goTo(screenId){
+    document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+    const target = document.getElementById(screenId);
+    if(target) target.classList.add('active');
+    window.scrollTo(0,0);
+  }
+
+  const branchIdInput = document.getElementById('branchId');
+  const branchNameInput = document.getElementById('branchName');
+  const afsIdInput = document.getElementById('afsId');
+  const areaSelect = document.getElementById('area');
+  const maxFloorSelect = document.getElementById('maxFloor');
+  const nextBtn = document.getElementById('nextBtn');
+
+  const fields = {
+    branchId: { el: document.getElementById('fBranchId') },
+    branchName: { el: document.getElementById('fBranchName') },
+    afsId: { el: document.getElementById('fAfsId') },
+    area: { el: document.getElementById('fArea') },
+    maxFloor: { el: document.getElementById('fMaxFloor') },
+    rooftop: { el: document.getElementById('fRooftop') },
+  };
+
+  let rooftopVal = '';
+
+  document.getElementById('rooftopToggle').addEventListener('click', (e) => {
+    const btn = e.target.closest('.t-btn');
+    if(!btn) return;
+    rooftopVal = btn.dataset.val;
+    btn.parentElement.querySelectorAll('.t-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    validateAll(false);
+  });
+
+  afsIdInput.addEventListener('input', () => {
+    afsIdInput.value = afsIdInput.value.replace(/[^0-9]/g, '').slice(0, 4);
+    validateAll(false);
+  });
+  [branchIdInput, branchNameInput, areaSelect, maxFloorSelect].forEach(el => {
+    el.addEventListener('input', () => validateAll(false));
+    el.addEventListener('change', () => validateAll(false));
+  });
+
+  function isValid(){
+    return branchIdInput.value.trim().length > 0 &&
+           branchNameInput.value.trim().length > 0 &&
+           /^[0-9]{4}$/.test(afsIdInput.value.trim()) &&
+           areaSelect.value !== '' &&
+           maxFloorSelect.value !== '' &&
+           rooftopVal !== '';
+  }
+
+  function validateAll(showErrors){
+    nextBtn.disabled = !isValid();
+    if(!showErrors) return;
+    fields.branchId.el.classList.toggle('error', branchIdInput.value.trim().length === 0);
+    fields.branchName.el.classList.toggle('error', branchNameInput.value.trim().length === 0);
+    fields.afsId.el.classList.toggle('error', !/^[0-9]{4}$/.test(afsIdInput.value.trim()));
+    fields.area.el.classList.toggle('error', areaSelect.value === '');
+    fields.maxFloor.el.classList.toggle('error', maxFloorSelect.value === '');
+    fields.rooftop.el.classList.toggle('error', rooftopVal === '');
+  }
+
+  nextBtn.addEventListener('click', () => {
+    if(!isValid()){ validateAll(true); return; }
+
+    branchData = {
+      name: branchNameInput.value.trim(),
+      id: branchIdInput.value.trim(),
+      afs: afsIdInput.value.trim(),
+      area: areaSelect.value,
+      maxFloor: maxFloorSelect.value,
+      rooftop: rooftopVal
+    };
+
+    buildZonesAndQuestions();
+
+    document.getElementById('cName').textContent = branchData.name;
+    document.getElementById('cId').textContent = branchData.id;
+    document.getElementById('cAfs').textContent = branchData.afs;
+    document.getElementById('cArea').textContent = branchData.area;
+    document.getElementById('cMaxFloor').textContent = 'ชั้น ' + branchData.maxFloor + (branchData.maxFloor === '2' ? ' (มีชั้นลอย)' : '');
+    document.getElementById('cRooftop').textContent = branchData.rooftop === 'yes' ? 'มี' : 'ไม่มี';
+    document.getElementById('cTotalQ').textContent = QUESTIONS.length + ' ข้อ';
+
+    goTo('screen2');
+  });
+
+  function buildZonesAndQuestions(){
+    ZONES = [];
+    QUESTIONS = [];
+
+    ZONES.push({ id:'outside', title:'ด้านนอกสาขา', intro: OUTSIDE_INTRO, groups: OUTSIDE_GROUPS, hasQuantity: true });
+    ZONES.push({ id:'hall', title:'โถงทำการและพื้นที่ด้านหลัง', intro: HALL_INTRO, groups: HALL_GROUPS, hasQuantity: false });
+    ZONES.push({ id:'restroom1', title:'ระบบสุขาภิบาลและห้องน้ำชั้น 1', intro: RESTROOM_INTRO, groups: RESTROOM_GROUPS, hasQuantity: false });
+
+    const maxFloor = parseInt(branchData.maxFloor, 10) || 1;
+    if(maxFloor >= 2){
+      ZONES.push({ id:'floor_mezz', title:'พื้นที่ชั้นลอย', intro: FLOOR_INTRO, groups: floorGroups(), hasQuantity: false });
+    }
+    for(let f = 3; f <= maxFloor; f++){
+      ZONES.push({ id:'floor_'+f, title:'พื้นที่ชั้น '+f, intro: FLOOR_INTRO, groups: floorGroups(), hasQuantity: false });
+    }
+    if(branchData.rooftop === 'yes'){
+      ZONES.push({ id:'rooftop', title:'พื้นที่ดาดฟ้า', intro: ROOFTOP_INTRO, groups: ROOFTOP_GROUPS, hasQuantity: false });
+    }
+
+    let qIndex = 0;
+    ZONES.forEach((zone, zi) => {
+      zone.groups.forEach((group) => {
+        group.items.forEach((text) => {
+          QUESTIONS.push({ id: 'q'+qIndex, num: qIndex+1, zoneIdx: zi, groupLabel: group.label, text: text, hasQuantity: zone.hasQuantity });
+          qIndex++;
+        });
+      });
+    });
+  }
+
+  document.getElementById('backBtn').addEventListener('click', () => goTo('screen1'));
+
+  document.getElementById('confirmBtn').addEventListener('click', () => {
+    document.getElementById('loadingName').textContent = branchData.name + ' (' + branchData.id + ')';
+    goTo('screen3');
+
+    setTimeout(() => {
+      loadSurveyBranchInfo();
+      renderTextZones();
+      goTo('surveyScreen');
+    }, 900);
+  });
+
+  function loadSurveyBranchInfo(){
+    document.getElementById('branchNameOut').textContent = branchData.name;
+    document.getElementById('branchIdOut').textContent = branchData.id;
+    document.getElementById('afsIdOut').textContent = branchData.afs;
+    document.getElementById('areaOut').textContent = branchData.area;
+    document.getElementById('branchNameOutPhoto').textContent = branchData.name;
+    document.getElementById('branchIdOutPhoto').textContent = branchData.id;
+    document.getElementById('afsIdOutPhoto').textContent = branchData.afs;
+    document.getElementById('areaOutPhoto').textContent = branchData.area;
+    document.getElementById('doneBranchName').textContent = branchData.name;
+    document.getElementById('totalCount').textContent = QUESTIONS.length;
+    document.getElementById('photoTotalCount').textContent = QUESTIONS.length;
+  }
+
+  document.getElementById('surveyBackBtn').addEventListener('click', () => goTo('screen2'));
+
+  let currentTextZone = 0;
+  const answered = new Set();
+
+  function renderTextZones(){
+    currentTextZone = 0;
+    const container = document.getElementById('textZonesContainer');
+    container.innerHTML = '';
+    answered.clear();
+
+    ZONES.forEach((zone, zi) => {
+      const panel = document.createElement('div');
+      panel.className = 'zone-panel';
+      panel.id = 'textZone' + zi;
+
+      const heading = document.createElement('div');
+      heading.className = 'zone-heading';
+      heading.innerHTML = '<div class="zone-tag">โซน ' + (zi+1) + ' / ' + ZONES.length + '</div>' +
+        '<h1>' + zone.title + '</h1><p>' + zone.intro.replace(/\n/g, '<br>') + '</p>';
+      panel.appendChild(heading);
+
+      zone.groups.forEach((group) => {
+        if(group.label){
+          const gl = document.createElement('div');
+          gl.className = 'group-label';
+          gl.textContent = group.label;
+          panel.appendChild(gl);
+        }
+        const qWrap = document.createElement('div');
+        qWrap.className = 'questions';
+        group.items.forEach((text) => {
+          const q = QUESTIONS.find(qq => qq.zoneIdx === zi && qq.text === text && qq.groupLabel === group.label);
+          const card = document.createElement('div');
+          card.className = 'qcard';
+          card.id = q.id;
+          let qtyHtml = '';
+          if(zone.hasQuantity){
+            qtyHtml = '<div class="qty-row"><label>จำนวน (ชิ้น/ถ้ามี)</label><input type="number" min="0" inputmode="numeric" data-qty="' + q.id + '" placeholder="0"></div>';
+          }
+          const noneBtnHtml = zone.hasQuantity
+            ? '<button type="button" class="yn-btn none" data-q="' + q.id + '" data-val="none">ไม่มีอุปกรณ์</button>'
+            : '';
+          card.innerHTML =
+            '<div class="qhead"><div class="qnum">' + q.num + '</div>' +
+            '<div class="qtitle-wrap"><div class="qtitle">' + text + '<span class="req">*</span></div></div></div>' +
+            qtyHtml +
+            '<div class="yn-toggle">' +
+              '<button type="button" class="yn-btn ok" data-q="' + q.id + '" data-val="ok">ปกติ</button>' +
+              '<button type="button" class="yn-btn bad" data-q="' + q.id + '" data-val="bad">ไม่ปกติ</button>' +
+              noneBtnHtml +
+            '</div>' +
+            '<textarea placeholder="Comment เพิ่มเติม (หากไม่มีอุปกรณ์ ใส่ว่า &quot;ไม่มี&quot;)"></textarea>';
+          qWrap.appendChild(card);
+        });
+        panel.appendChild(qWrap);
+      });
+
+      container.appendChild(panel);
+    });
+
+    showTextZone(0);
+    updateProgress();
+  }
+
+  document.getElementById('textZonesContainer').addEventListener('click', (e) => {
+    const btn = e.target.closest('.yn-btn');
+    if(!btn) return;
+    const q = btn.dataset.q;
+    const card = document.getElementById(q);
+    card.querySelectorAll('.yn-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    card.classList.add('answered');
+    answered.add(q);
+
+    const qtyInput = card.querySelector('input[data-qty="' + q + '"]');
+    if(qtyInput){
+      if(btn.dataset.val === 'none'){
+        qtyInput.value = '0';
+        qtyInput.disabled = true;
+      } else {
+        qtyInput.disabled = false;
+      }
+    }
+    updateProgress();
+  });
+
+  function showTextZone(idx){
+    currentTextZone = idx;
+    document.querySelectorAll('#textZonesContainer .zone-panel').forEach(p => p.classList.remove('active'));
+    const panel = document.getElementById('textZone' + idx);
+    if(panel) panel.classList.add('active');
+    window.scrollTo(0,0);
+    document.getElementById('zoneTagText').textContent = 'โซน ' + (idx+1) + '/' + ZONES.length + ' \u00b7 ' + ZONES[idx].title;
+    document.getElementById('textPrevBtn').disabled = (idx === 0);
+    const isLast = idx === ZONES.length - 1;
+    document.getElementById('textNextBtn').textContent = isLast ? 'ถัดไป \u2014 แนบรูปภาพ' : 'ถัดไปโซน';
+    document.getElementById('textNavSub').textContent = isLast
+      ? 'ตอบให้ครบทุกข้อของทุกโซนก่อนไปหน้าแนบรูปภาพ'
+      : 'ตอบให้ครบทุกข้อในโซนนี้ก่อนไปโซนถัดไป';
+  }
+
+  function zoneQuestionIds(zi){
+    return QUESTIONS.filter(q => q.zoneIdx === zi).map(q => q.id);
+  }
+
+  document.getElementById('textPrevBtn').addEventListener('click', () => {
+    if(currentTextZone > 0) showTextZone(currentTextZone - 1);
+  });
+
+  document.getElementById('textNextBtn').addEventListener('click', () => {
+    const ids = zoneQuestionIds(currentTextZone);
+    const firstUnanswered = ids.find(id => !answered.has(id));
+    if(firstUnanswered){
+      const card = document.getElementById(firstUnanswered);
+      alert('กรุณาตอบคำถามให้ครบทุกข้อในโซนนี้ก่อนดำเนินการต่อ');
+      card.scrollIntoView({behavior:'smooth', block:'center'});
+      return;
+    }
+    if(currentTextZone < ZONES.length - 1){
+      showTextZone(currentTextZone + 1);
+    } else {
+      renderPhotoZones();
+      goTo('photoScreen');
+    }
+  });
+
+  function updateProgress(){
+    document.getElementById('answeredCount').textContent = answered.size;
+    document.getElementById('progressFill').style.width = (QUESTIONS.length ? (answered.size / QUESTIONS.length * 100) : 0) + '%';
+  }
+
+  function getStatus(qid){
+    const selectedBtn = document.querySelector('#' + qid + ' .yn-btn.selected');
+    return selectedBtn ? selectedBtn.dataset.val : null;
+  }
+  function statusBadgeClass(status){
+    return status === 'ok' ? 'ok' : (status === 'bad' ? 'bad' : (status === 'none' ? 'none' : ''));
+  }
+  function statusBadgeText(status){
+    if(status === 'ok') return 'ปกติ';
+    if(status === 'bad') return 'ไม่ปกติ';
+    if(status === 'none') return 'ไม่มีอุปกรณ์';
+    return 'ไม่ได้ตอบ';
+  }
+  function getDetail(qid){
+    const el = document.querySelector('#' + qid + ' textarea');
+    return el ? el.value.trim() : '';
+  }
+  function getQty(qid){
+    const el = document.querySelector('input[data-qty="' + qid + '"]');
+    return el && el.value !== '' ? el.value.trim() : null;
+  }
+
+  let currentPhotoZone = 0;
+  const photoCounted = new Set();
+
+  function renderPhotoZones(){
+    currentPhotoZone = 0;
+    const container = document.getElementById('photoZonesContainer');
+    container.innerHTML = '';
+    photoCounted.clear();
+
+    ZONES.forEach((zone, zi) => {
+      const panel = document.createElement('div');
+      panel.className = 'zone-panel';
+      panel.id = 'photoZone' + zi;
+
+      const heading = document.createElement('div');
+      heading.className = 'zone-heading';
+      heading.innerHTML = '<div class="zone-tag">โซน ' + (zi+1) + ' / ' + ZONES.length + '</div>' +
+        '<h1>' + zone.title + ' \u2014 แนบรูปภาพ</h1><p>แนบรูปประกอบแต่ละข้อตามความเหมาะสม (ไม่บังคับทุกข้อ)</p>';
+      panel.appendChild(heading);
+
+      const qWrap = document.createElement('div');
+      qWrap.className = 'questions';
+      QUESTIONS.filter(q => q.zoneIdx === zi).forEach((q) => {
+        const status = getStatus(q.id);
+        const card = document.createElement('div');
+        card.className = 'photo-qcard';
+        card.id = 'photoCard_' + q.id;
+        card.innerHTML =
+          '<div class="photo-qhead">' +
+            '<div class="photo-qhead-left"><div class="qnum">' + q.num + '</div>' +
+            '<div class="qtitle-wrap"><div class="qtitle">' + q.text + '</div>' +
+            '<span class="status-badge ' + statusBadgeClass(status) + '" id="statusBadge_' + q.id + '">' +
+            statusBadgeText(status) + '</span>' +
+            '<span class="photo-count-tag" id="photoCountTag_' + q.id + '">ยังไม่แนบรูป</span></div></div>' +
+          '</div>' +
+          '<div class="photo-row" id="photoRow_' + q.id + '">' +
+            '<label class="photo-add">' +
+              '<svg viewBox="0 0 20 20" fill="none"><path d="M3 7C3 6.45 3.45 6 4 6H6L7 4H13L14 6H16C16.55 6 17 6.45 17 7V15C17 15.55 16.55 16 16 16H4C3.45 16 3 15.55 3 15V7Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><circle cx="10" cy="11" r="2.7" stroke="currentColor" stroke-width="1.5"/></svg>' +
+              '<input type="file" accept="image/*" capture="environment" class="hidden" onchange="handlePhoto(event, \'' + q.id + '\')">' +
+            '</label>' +
+          '</div>';
+        qWrap.appendChild(card);
+      });
+      panel.appendChild(qWrap);
+
+      container.appendChild(panel);
+    });
+
+    showPhotoZone(0);
+    updatePhotoProgress();
+  }
+
+  function showPhotoZone(idx){
+    currentPhotoZone = idx;
+    document.querySelectorAll('#photoZonesContainer .zone-panel').forEach(p => p.classList.remove('active'));
+    const panel = document.getElementById('photoZone' + idx);
+    if(panel) panel.classList.add('active');
+    window.scrollTo(0,0);
+    document.getElementById('zoneTagPhoto').textContent = 'โซน ' + (idx+1) + '/' + ZONES.length + ' \u00b7 ' + ZONES[idx].title;
+    document.getElementById('photoPrevBtn').disabled = (idx === 0);
+    const isLast = idx === ZONES.length - 1;
+    document.getElementById('photoNextBtn').textContent = isLast ? 'ส่งแบบสำรวจ' : 'ถัดไปโซน';
+    document.getElementById('photoNavSub').textContent = isLast
+      ? 'ตรวจสอบคำตอบให้ครบก่อนส่ง ไม่สามารถแก้ไขหลังส่งแล้ว'
+      : 'แนบรูปไม่บังคับทุกข้อ \u00b7 กด "ถัดไปโซน" เพื่อไปต่อได้เลย';
+  }
+
+  document.getElementById('photoBackBtn').addEventListener('click', () => {
+    showTextZone(ZONES.length - 1);
+    goTo('surveyScreen');
+  });
+
+  document.getElementById('photoPrevBtn').addEventListener('click', () => {
+    if(currentPhotoZone > 0) showPhotoZone(currentPhotoZone - 1);
+  });
+
+  document.getElementById('photoNextBtn').addEventListener('click', () => {
+    if(currentPhotoZone < ZONES.length - 1){
+      showPhotoZone(currentPhotoZone + 1);
+    } else {
+      submitSurvey();
+    }
+  });
+
+  function handlePhoto(evt, qid){
+    const file = evt.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const row = document.getElementById('photoRow_' + qid);
+      const thumb = document.createElement('div');
+      thumb.className = 'photo-thumb';
+      thumb.innerHTML = '<img src="' + reader.result + '">' +
+        '<div class="rm" onclick="removePhoto(\'' + qid + '\', this)">' +
+        '<svg viewBox="0 0 10 10" fill="none"><path d="M1 1L9 9M9 1L1 9" stroke="white" stroke-width="1.4" stroke-linecap="round"/></svg></div>';
+      row.insertBefore(thumb, row.lastElementChild);
+      photoCounted.add(qid);
+      updatePhotoCountTag(qid);
+      updatePhotoProgress();
+    };
+    reader.readAsDataURL(file);
+    evt.target.value = '';
+  }
+
+  function removePhoto(qid, rmEl){
+    rmEl.parentElement.remove();
+    updatePhotoCountTag(qid);
+    const remaining = document.querySelectorAll('#photoRow_' + qid + ' .photo-thumb').length;
+    if(remaining === 0){
+      photoCounted.delete(qid);
+      updatePhotoProgress();
+    }
+  }
+
+  function updatePhotoCountTag(qid){
+    const count = document.querySelectorAll('#photoRow_' + qid + ' .photo-thumb').length;
+    const tag = document.getElementById('photoCountTag_' + qid);
+    if(count === 0){
+      tag.textContent = 'ยังไม่แนบรูป';
+      tag.classList.remove('has-photo');
+    } else {
+      tag.textContent = 'แนบแล้ว ' + count + ' รูป';
+      tag.classList.add('has-photo');
+    }
+  }
+
+  function updatePhotoProgress(){
+    document.getElementById('photoCount').textContent = photoCounted.size;
+    document.getElementById('photoProgressFill').style.width = (QUESTIONS.length ? (photoCounted.size / QUESTIONS.length * 100) : 0) + '%';
+  }
+
+  function collectAnswers(){
+    return QUESTIONS.map((q) => {
+      const zone = ZONES[q.zoneIdx];
+      const photos = Array.from(document.querySelectorAll('#photoRow_' + q.id + ' .photo-thumb img')).map(img => img.src);
+      return {
+        question: q.id,
+        zone: zone.title,
+        group: q.groupLabel,
+        label: q.text,
+        quantity: getQty(q.id),
+        status: getStatus(q.id),
+        detail: getDetail(q.id),
+        photos: photos
+      };
+    });
+  }
+
+  function submitSurvey(){
+    const nextBtnEl = document.getElementById('photoNextBtn');
+    nextBtnEl.disabled = true;
+    nextBtnEl.textContent = 'กำลังส่ง...';
+
+    const payload = { branch: branchData, answers: collectAnswers() };
+
+    fetch('/api/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).then((res) => {
+      if(!res.ok) throw new Error('submit failed');
+      document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+      document.getElementById('doneScreen').classList.add('active');
+    }).catch((err) => {
+      alert('ส่งแบบสำรวจไม่สำเร็จ กรุณาตรวจสอบการเชื่อมต่อแล้วลองใหม่อีกครั้ง');
+      nextBtnEl.disabled = false;
+      nextBtnEl.textContent = 'ส่งแบบสำรวจ';
+    });
+  }
+</script>
+
+</body>
+</html>
