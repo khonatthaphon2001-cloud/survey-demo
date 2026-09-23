@@ -1585,45 +1585,79 @@
     }
   });
 
+  // ===================== ย่อ/บีบอัดรูปในเบราว์เซอร์ก่อนส่ง (แก้ปัญหาส่งช้า โดยเฉพาะบนมือถือ) =====================
+  // กล้องมือถือมักถ่ายรูปออกมา 3-8MB/ใบ พอมีหลายรูปต่อแบบสำรวจ ข้อมูลรวมหลายสิบ MB ทำให้อัปโหลดช้ามาก
+  // ย่อด้านยาวสุดไม่เกิน PHOTO_MAX_DIM px + บีบอัด JPEG คุณภาพ PHOTO_QUALITY ก่อนเก็บไว้ส่ง ลดขนาดไฟล์ลงมาก
+  const PHOTO_MAX_DIM = 1280;
+  const PHOTO_QUALITY = 0.75;
+
+  function resizeImageFile(file, maxDim, quality){
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          let w = img.width, h = img.height;
+          const longest = Math.max(w, h);
+          if(longest > maxDim){
+            const ratio = maxDim / longest;
+            w = Math.round(w * ratio);
+            h = Math.round(h * ratio);
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          try {
+            resolve(canvas.toDataURL('image/jpeg', quality));
+          } catch(err){
+            resolve(e.target.result); // ย่อไม่สำเร็จ (เช่นรูปแปลกๆ) ใช้ต้นฉบับแทน ดีกว่าไม่ได้รูปเลย
+          }
+        };
+        img.onerror = () => resolve(e.target.result); // เปิดเป็นรูปไม่ได้ ใช้ข้อมูลดิบแทน
+        img.src = e.target.result;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
   function handlePhoto(evt, qid){
     const file = evt.target.files[0];
     if(!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
+    evt.target.value = '';
+    resizeImageFile(file, PHOTO_MAX_DIM, PHOTO_QUALITY).then((dataUrl) => {
       const row = document.getElementById('photoRow_' + qid);
       const thumb = document.createElement('div');
       thumb.className = 'photo-thumb';
-      thumb.innerHTML = '<img src="' + reader.result + '">' +
+      thumb.innerHTML = '<img src="' + dataUrl + '">' +
         '<div class="rm" onclick="removePhoto(\'' + qid + '\', this)">' +
         '<svg viewBox="0 0 10 10" fill="none"><path d="M1 1L9 9M9 1L1 9" stroke="white" stroke-width="1.4" stroke-linecap="round"/></svg></div>';
       row.insertBefore(thumb, row.lastElementChild);
       photoCounted.add(qid);
       updatePhotoCountTag(qid);
       updatePhotoProgress();
-    };
-    reader.readAsDataURL(file);
-    evt.target.value = '';
+    });
   }
 
   // ===================== photo_upload (labeled slots, e.g. "รูปหน้าตรงสาขา" / "รูปมุมข้างสาขา") =====================
   function handleSlotPhoto(evt, qid, slotIdx){
     const file = evt.target.files[0];
     if(!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
+    evt.target.value = '';
+    resizeImageFile(file, PHOTO_MAX_DIM, PHOTO_QUALITY).then((dataUrl) => {
       const row = document.getElementById('photoRow_' + qid + '_s' + slotIdx);
       // แต่ละ slot ถ่ายได้ภาพเดียว (มุมที่กำหนดไว้ตายตัว) — แทนที่รูปเดิมถ้ามี
       row.querySelectorAll('.photo-thumb').forEach(t => t.remove());
       const thumb = document.createElement('div');
       thumb.className = 'photo-thumb';
-      thumb.innerHTML = '<img src="' + reader.result + '">' +
+      thumb.innerHTML = '<img src="' + dataUrl + '">' +
         '<div class="rm" onclick="removeSlotPhoto(\'' + qid + '\', ' + slotIdx + ', this)">' +
         '<svg viewBox="0 0 10 10" fill="none"><path d="M1 1L9 9M9 1L1 9" stroke="white" stroke-width="1.4" stroke-linecap="round"/></svg></div>';
       row.insertBefore(thumb, row.lastElementChild);
       updateSlotCountTag(qid);
-    };
-    reader.readAsDataURL(file);
-    evt.target.value = '';
+    });
   }
 
   function removeSlotPhoto(qid, slotIdx, rmEl){
