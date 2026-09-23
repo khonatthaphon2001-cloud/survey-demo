@@ -785,7 +785,10 @@
             quantityLabel:'มีจำนวนกี่ถัง',
             options:[
               {value:'ok', label:'มีถังดับเพลิงติดตั้งอยู่พร้อมใบ Checklist ที่ตรวจสอบถึงเดือนปัจจุบัน (จำเป็นต้องมี)', tone:'ok'},
-              {value:'damaged', label:'ถังดับเพลิงชำรุด', tone:'bad', detail:true, detailType:'number', detailPlaceholder:'จำนวนที่ชำรุด (ถัง)'},
+              {value:'damaged', label:'ถังดับเพลิงชำรุด', tone:'bad', details:[
+                {type:'number', placeholder:'จำนวนที่ชำรุด (ถัง)'},
+                {type:'text', placeholder:'อาการชำรุด/บริเวณอุปกรณ์ที่ชำรุด'}
+              ]},
               {value:'missing', label:'ไม่พบถังดับเพลิงในสาขา', tone:'bad'}
             ],
             slots:[
@@ -798,7 +801,10 @@
             quantityLabel:'มีจำนวนกี่เครื่อง',
             options:[
               {value:'ok', label:'มีไฟฉุกเฉิน Emergency light ติดตั้งอยู่พร้อมใบ Checklist ที่ตรวจสอบถึงเดือนปัจจุบัน (จำเป็นต้องมี)', tone:'ok'},
-              {value:'damaged', label:'ไฟฉุกเฉินชำรุด', tone:'bad', detail:true, detailType:'number', detailPlaceholder:'จำนวนที่ชำรุด (เครื่อง)'},
+              {value:'damaged', label:'ไฟฉุกเฉินชำรุด', tone:'bad', details:[
+                {type:'number', placeholder:'จำนวนที่ชำรุด (เครื่อง)'},
+                {type:'text', placeholder:'อาการชำรุด/บริเวณอุปกรณ์ที่ชำรุด'}
+              ]},
               {value:'missing', label:'ไม่พบไฟฉุกเฉินในสาขา', tone:'bad'}
             ],
             slots:[
@@ -892,8 +898,8 @@
           { kind:'radio',
             title:'ประเมินความพึงพอใจในการให้บริการซ่อมบำรุงสาขา',
             options:[
-              {value:'satisfied', label:'พอใจ', tone:'ok'},
-              {value:'improve', label:'ปรับปรุง', tone:'bad'},
+              {value:'satisfied', label:'พอใจ', tone:'ok', detail:true, detailPlaceholder:'หมายเหตุเพิ่มเติม (ถ้ามี)'},
+              {value:'improve', label:'ปรับปรุง', tone:'bad', detail:true, detailPlaceholder:'หมายเหตุเพิ่มเติม (ถ้ามี)'},
               {value:'never', label:'ไม่เคยใช้บริการ/ไม่เคยเปิดงานซ่อมแซมผ่านระบบ TASK LIST', detail:true, detailPlaceholder:'หมายเหตุเพิ่มเติม (ถ้ามี)'}
             ]
           }
@@ -1185,7 +1191,7 @@
           '<div class="photo-row" id="photoRow_' + q.id + '_s' + si + '">' +
             '<label class="photo-add">' +
               '<svg viewBox="0 0 20 20" fill="none"><path d="M3 7C3 6.45 3.45 6 4 6H6L7 4H13L14 6H16C16.55 6 17 6.45 17 7V15C17 15.55 16.55 16 16 16H4C3.45 16 3 15.55 3 15V7Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><circle cx="10" cy="11" r="2.7" stroke="currentColor" stroke-width="1.5"/></svg>' +
-              '<input type="file" accept="image/*" capture="environment" class="hidden" onchange="handleSlotPhoto(event, \'' + q.id + '\', ' + si + ')">' +
+              '<input type="file" accept="image/*" class="hidden" onchange="handleSlotPhoto(event, \'' + q.id + '\', ' + si + ')">' +
             '</label>' +
           '</div>' +
         '</div>';
@@ -1243,10 +1249,15 @@
     let optsHtml = '';
     q.options.forEach((opt, oi) => {
       const toneClass = opt.tone ? ' tone-' + opt.tone : '';
-      optsHtml += '<button type="button" class="radio-opt' + toneClass + '" data-q="' + q.id + '" data-val="' + opt.value + '" data-detail="' + (opt.detail ? '1':'0') + '" data-detail-type="' + (opt.detailType || 'text') + '" data-detail-placeholder="' + (opt.detailPlaceholder || 'โปรดระบุรายละเอียด') + '">' +
+      // รองรับทั้งแบบเก่า (detail:true ช่องเดียว) และแบบใหม่ (details: [...] หลายช่อง) — แปลงแบบเก่าให้เป็น array เดียวกัน
+      let detailsArr = null;
+      if(opt.details){ detailsArr = opt.details; }
+      else if(opt.detail){ detailsArr = [{ type: opt.detailType || 'text', placeholder: opt.detailPlaceholder || 'โปรดระบุรายละเอียด' }]; }
+      const detailsJson = detailsArr ? JSON.stringify(detailsArr).replace(/"/g, '&quot;') : '';
+      optsHtml += '<button type="button" class="radio-opt' + toneClass + '" data-q="' + q.id + '" data-val="' + opt.value + '" data-details="' + detailsJson + '">' +
         '<span class="dot"></span><span>' + opt.label + '</span></button>';
     });
-    const anyDetail = q.options.some(o => o.detail);
+    const anyDetail = q.options.some(o => o.details || o.detail);
     const qtyHtml = q.hasQuantity
       ? '<div class="qty-row"><label>' + q.quantityLabel + (q.quantityRequired ? ' *' : '') + '</label><input type="number" min="0" inputmode="numeric" data-qty="' + q.id + '" placeholder="0"></div>' +
         (q.quantityRequired ? '<div class="skip-note" style="margin-top:-6px;">ต้องระบุจำนวนก่อนไปต่อ &mdash; ยกเว้นเลือก "ไม่พบ"</div>' : '')
@@ -1333,19 +1344,23 @@
       answered.add(q);
       const detailWrap = document.getElementById('detailWrap_' + q);
       if(detailWrap){
-        const showDetail = radioBtn.dataset.detail === '1';
+        const detailsStr = radioBtn.dataset.details;
+        const details = detailsStr ? JSON.parse(detailsStr.replace(/&quot;/g, '"')) : [];
+        const showDetail = details.length > 0;
         detailWrap.classList.toggle('show', showDetail);
         if(showDetail){
-          const dType = radioBtn.dataset.detailType;
-          const dPlaceholder = radioBtn.dataset.detailPlaceholder;
-          // สร้าง input ใหม่เฉพาะตอนยังไม่มี หรือชนิดเปลี่ยนไป (กันข้อมูลที่กรอกไว้หาย ถ้าสลับกลับมาตัวเลือกเดิม)
-          if(detailWrap.dataset.currentType !== dType){
-            detailWrap.dataset.currentType = dType;
-            if(dType === 'number'){
-              detailWrap.innerHTML = '<input type="number" min="0" inputmode="numeric" placeholder="' + dPlaceholder + '" data-detail-input="' + q + '">';
-            } else {
-              detailWrap.innerHTML = '<textarea placeholder="' + dPlaceholder + '" data-detail-input="' + q + '"></textarea>';
-            }
+          // สร้าง input ใหม่เฉพาะตอนสลับไปคนละตัวเลือก (กันข้อมูลที่กรอกไว้หาย ถ้าสลับกลับมาตัวเลือกเดิม)
+          if(detailWrap.dataset.currentOpt !== radioBtn.dataset.val){
+            detailWrap.dataset.currentOpt = radioBtn.dataset.val;
+            let html = '';
+            details.forEach((d, di) => {
+              if(d.type === 'number'){
+                html += '<input type="number" min="0" inputmode="numeric" placeholder="' + d.placeholder + '" data-detail-input="' + q + '" style="margin-bottom:8px;">';
+              } else {
+                html += '<textarea placeholder="' + d.placeholder + '" data-detail-input="' + q + '" style="margin-bottom:8px;"></textarea>';
+              }
+            });
+            detailWrap.innerHTML = html;
           }
         }
       }
@@ -1457,8 +1472,13 @@
     return (opt && opt.tone) ? opt.tone : '';
   }
   function getDetail(qid){
-    const el = document.querySelector('[data-detail-input="' + qid + '"]');
-    return el ? el.value.trim() : '';
+    const els = document.querySelectorAll('[data-detail-input="' + qid + '"]');
+    if(els.length === 0) return '';
+    if(els.length === 1) return els[0].value.trim();
+    // มีหลายช่อง (เช่น "จำนวนที่ชำรุด" + "อาการชำรุด/บริเวณ") — รวมเป็นข้อความเดียวคั่นด้วย " | "
+    const parts = [];
+    els.forEach(el => { const v = el.value.trim(); if(v) parts.push(v); });
+    return parts.join(' | ');
   }
   function getQty(qid){
     const el = document.querySelector('input[data-qty="' + qid + '"]');
@@ -1521,7 +1541,7 @@
           '<div class="photo-row" id="photoRow_' + q.id + '">' +
             '<label class="photo-add">' +
               '<svg viewBox="0 0 20 20" fill="none"><path d="M3 7C3 6.45 3.45 6 4 6H6L7 4H13L14 6H16C16.55 6 17 6.45 17 7V15C17 15.55 16.55 16 16 16H4C3.45 16 3 15.55 3 15V7Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><circle cx="10" cy="11" r="2.7" stroke="currentColor" stroke-width="1.5"/></svg>' +
-              '<input type="file" accept="image/*" capture="environment" class="hidden" onchange="handlePhoto(event, \'' + q.id + '\')">' +
+              '<input type="file" accept="image/*" class="hidden" onchange="handlePhoto(event, \'' + q.id + '\')">' +
             '</label>' +
           '</div>';
         qWrap.appendChild(card);
